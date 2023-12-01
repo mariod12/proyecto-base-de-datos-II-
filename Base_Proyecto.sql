@@ -1,3 +1,4 @@
+
 CREATE DATABASE Telecomunication_Bussines;
 GO
 
@@ -97,6 +98,96 @@ CONSTRAINT FK_emp_per FOREIGN KEY (id_persona) REFERENCES personas.Personas(idPe
 CONSTRAINT FK_emp_puesto FOREIGN KEY (id_puesto) REFERENCES empleados.PuestosTrabajo(idPuesto),
 );
 
+--esta se puede usar para ver cual es la sucursal que mas ventas tiene 
+CREATE TABLE Sucursales(
+idLocal INTEGER PRIMARY KEY,
+idcolonia INTEGER NOT NULL,
+horaApertura TIME NOT NULL, 
+horaCierre TIME NOT NULL, 
+telefono VARCHAR (8) NOT NULL,
+eMail VARCHAR (50) NULL,
+CONSTRAINT FK_sucur_mun FOREIGN KEY (idcolonia) REFERENCES Personas.colonias(id_colonia)
+);
+
+-- INCOMPLETA falta agregar los servicios ( ponerle mas logica)
+CREATE TABLE Factura(
+	n_Factura INTEGER PRIMARY KEY,
+	id_empleado INTEGER NOT NULL,
+	id_cliente INTEGER not null,
+	fecha_hora DATETIME NOT NULL,
+	id_local INTEGER NOT NULL,
+	monto_pagado DECIMAL (10,2) NOT NULL,
+	cambio DECIMAL (10,2) NOT NULL,
+	sub_total DECIMAL (10,2) NOT NULL,
+	gravado15 DECIMAL (10,2) NOT NULL,
+	total DECIMAL (10,2) NOT NULL,
+	CONSTRAINT FK_id_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados.Empleados(id_empleado),
+	CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes.Clientes(id_clientes),
+	CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES Sucursales(idlocal)
+	);
+
+--============================================================================================== 
+	CREATE TABLE Celulares (
+    Celularid  INT PRIMARY KEY,
+    Marca VARCHAR(50),
+    Modelo VARCHAR(50),
+    descripcion varchar (100)
+);
+-- Tabla de Servicios
+CREATE TABLE Servicios (
+    ServicioID INT PRIMARY KEY,
+    descripcionServicio VARCHAR(50)
+);
+
+
+-- Tabla de Contratos
+CREATE TABLE Contratos (
+    ContratoID INT PRIMARY KEY,
+    ClienteID INT,
+    ServicioID INT,
+    FechaInicio DATE,
+    FechaFin DATE,
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
+);
+
+
+-- Tabla de Planes
+CREATE TABLE PlanesPostpago (
+    PlanID INT PRIMARY KEY,
+    CelularID INT,
+    ClienteID INT,
+    ContratoID INT,
+    FOREIGN KEY (CelularID) REFERENCES Celulares(CelularID),
+    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
+    FOREIGN KEY (ContratoID) REFERENCES Contratos(ContratoID)
+);
+
+
+
+CREATE TABLE TipoServicio(
+
+
+); 
+
+
+-- Tabla de ServiciosResidenciales
+CREATE TABLE ServiciosResidenciales (
+    ServicioResidencialID INT PRIMARY KEY,
+    NombreServicioResidencial VARCHAR(50),
+    ContratoID INT,
+    FOREIGN KEY (ContratoID) REFERENCES Contratos(ContratoID)
+);
+
+--======================================================================
+
+
+
+
+
+
+
+
 ---(productos: Telefonia fija, telefonia movil...)
 CREATE TABLE Ventas.Servicios(
     ID_Servicio INT PRIMARY KEY,
@@ -107,6 +198,7 @@ CREATE TABLE Ventas.Servicios(
 );
 GO
 
+--averguar como funcionan los planes 
 CREATE TABLE Ventas.Planes (
     ID_plan INT PRIMARY KEY,
     descripcion NVARCHAR(50),
@@ -114,6 +206,7 @@ CREATE TABLE Ventas.Planes (
 	);
 GO
 
+--no se muy bien a que se refiere con esta 
 CREATE TABLE Ventas.Servicios_Planes (
     id_Servicios_Planes INT PRIMARY KEY,
     ID_Servicio INT,
@@ -124,16 +217,18 @@ CREATE TABLE Ventas.Servicios_Planes (
 );
 GO
 
+--no entiendo para que es esta 
 CREATE TABLE Ventas.Periodo_pago(
     Id_periodo_pago INT PRIMARY KEY,
 	Descripcion NVARCHAR(50)
 );
 GO
 
+
 CREATE TABLE Ventas.contrato (
     codigo_contrato INT PRIMARY KEY,
-    id_Servicios_Planes INT
-	ID_Cliente INT,
+    id_Servicios_Planes INT,
+	id_clientes INT,
 	fecha_inicio date,
 	fecha_fin date, 
 	fecha_pago date
@@ -188,41 +283,15 @@ CREATE TABLE ventas.Facturacion (
 );
 GO
 
-CREATE TABLE Factura(
-	n_Factura INTEGER PRIMARY KEY,
-	id_empleado INTEGER NOT NULL,
-	id_cliente INTEGER,
-	fecha_hora DATETIME NOT NULL,
-	id_local INTEGER NOT NULL,
-	monto_pagado DECIMAL (10,2) NOT NULL,
-	cambio DECIMAL (10,2) NOT NULL,
-	sub_total DECIMAL (10,2) NOT NULL,
-	gravado15 DECIMAL (10,2) NOT NULL,
-	total DECIMAL (10,2) NOT NULL,
-	CONSTRAINT FK_id_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados(id_empleado),
-	CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes(id_clientes),
-	CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES Sucursales(idlocal)
-	);
-
-CREATE TABLE detalle_compra(
-	id_detalleCompra INTEGER PRIMARY KEY,
-	n_factura INTEGER NOT NULL,
-	producto VARCHAR(20) NOT NULL,
-	cantidad INTEGER NOT NULL,
-	CONSTRAINT FK_n_factura FOREIGN KEY (n_factura) REFERENCES Factura(n_factura),
-	CONSTRAINT FK_Producto FOREIGN KEY (producto) REFERENCES Productos(codigo_barras)
-	);
-ALTER TABLE detalle_compra
-ADD PrecioProducto DECIMAL(10,2)
 
 
 ---DIMENSIONES 
----tiempo
+---tiempo esta es fija 
 ---clientes:(Que tipo de servicios se consumen mas por edad)
-----(Cuales son los paquetes que mas compran los clientes venden en el mes de diciembre)
+---(Cuales son los paquetes que mas compran los clientes venden en el mes de diciembre)
 ---servicios: (Servicios mas solicitados por zonas)tipo de servicios, zonas,
 ---ventas:(Cuales son los paquetes que mas se venden en el mes de diciembre)
----soporte: (cada cuanto se le da soporte a un tipo de servicio) 
+--soporte: (cada cuanto se le da soporte a un tipo de servicio) 
 ---Empleados: (empleados que mas ventas ha hecho en un lapso de tiempo)
 
 
@@ -234,3 +303,32 @@ ADD PrecioProducto DECIMAL(10,2)
 ----planes y servuicios 
 
 
+
+
+
+
+/* tigo y claro te pueden vender
+
+celulares 
+
+celulares con plan (postpago) 
+
+servicios de msj, llamadas e internet (esto puede estar relacionado con celulares con plan) 
+
+el servicio de plan y servicios residenciales deben darse validos por un contrato 
+
+un cliente puede tener varios planes y varios planes pueden ser de un cliente 
+
+servicios redicenciales 
+(averiguar que incluyen los servicios residenciles)
+
+contratos para los servicios residenciales y comprar celulares con plan 
+
+para saber cuales son los servicions mas vendidos puedo hacerlo con la tabla de contratos, eso es en servicios
+
+para saber cual es el producto mas vendido en factura 
+
+tengo que relacionar la informacion del contrato en factura para poder obtener el tipo de servicio 
+   
+   
+   
