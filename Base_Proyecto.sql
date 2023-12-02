@@ -1,4 +1,3 @@
-
 CREATE DATABASE Telecomunication_Bussines;
 GO
 
@@ -13,7 +12,9 @@ CREATE SCHEMA Empleados
 GO
 CREATE SCHEMA Ventas
 GO
---create tables 
+--CREATE TABLES 
+
+-- estas tablas son para conocer la ubicacion de la empresa, clientes y empleados 
 CREATE TABLE Personas.Paises(
 idPais INTEGER IDENTITY (1,1) PRIMARY KEY,
 descripcion VARCHAR (20) NOT NULL
@@ -32,7 +33,6 @@ idDepto INTEGER NOT NULL,
 decripcion VARCHAR(50)
 CONSTRAINT FK_mun_depto FOREIGN KEY (idDepto) REFERENCES Personas.Departamentos(idDepto)
 );
-
 
 CREATE TABLE Personas.Colonias(
 id_colonia INT IDENTITY (1,1) PRIMARY KEY,
@@ -63,7 +63,7 @@ CONSTRAINT FK_per_mun FOREIGN KEY (id_colonia) REFERENCES  Personas.Colonias(id_
 CONSTRAINT FK_per_gen FOREIGN KEY (id_genero) REFERENCES Personas.Generos(id_genero)
 );
 
-
+-- tablas para registrar los clientes 
 CREATE TABLE Clientes.tipoCliente(
   id_tipo_cliente INT IDENTITY PRIMARY KEY,
   descripcion NVARCHAR(100),
@@ -81,6 +81,7 @@ CONSTRAINT Fk_persona FOREIGN KEY (id_tipo_cliente) REFERENCES Personas.Personas
 
 );
 
+--tablas para registrar empleados 
 CREATE TABLE Empleados.PuestosTrabajo(
 idPuesto INTEGER IDENTITY (1,1) PRIMARY KEY,
 descripcion VARCHAR (80) NOT NULL,
@@ -88,7 +89,7 @@ comentario VARCHAR (150) NULL
 );
 
 
-CREATE TABLE Empleados.Empleados (
+CREATE TABLE Empleados.Empleados(
 id_empleado INTEGER PRIMARY KEY,
 id_persona INTEGER NOT NULL,
 id_puesto INTEGER NOT NULL, 
@@ -102,12 +103,98 @@ CONSTRAINT FK_emp_puesto FOREIGN KEY (id_puesto) REFERENCES empleados.PuestosTra
 CREATE TABLE Sucursales(
 idLocal INTEGER PRIMARY KEY,
 idcolonia INTEGER NOT NULL,
+descripcion VARCHAR (100) NOT NULL, -- para el nombre de la sucursal o direccion, verificar esto 
 horaApertura TIME NOT NULL, 
 horaCierre TIME NOT NULL, 
 telefono VARCHAR (8) NOT NULL,
 eMail VARCHAR (50) NULL,
 CONSTRAINT FK_sucur_mun FOREIGN KEY (idcolonia) REFERENCES Personas.colonias(id_colonia)
 );
+
+CREATE TABLE Tipos_Servicios(
+id_tipo_servicio INT PRIMARY KEY IDENTITY(1,1), 
+descripcion varchar(100)--hogar o movil 
+);
+
+--OJO A ESTA TABLA QUE TENGO SOLO PARA SABER SI ES TIPO HOGAR O MOVIL Y LUEGO JALARLO A LA FACTURA O ALGO AIS 
+CREATE TABLE Servicio_contratado(
+id_Servicio INT PRIMARY KEY IDENTITY (1,1),
+id_tipo INT NOT NULL,--hogar o movil 
+CONSTRAINT FKservicios FOREIGN KEY (id_tipo) REFERENCES Tipos_Servicios(id_tipo_servicio)
+);
+
+CREATE TABLE Tipo_Plan_movil (
+id_Tipo_Plan_movil INT PRIMARY KEY IDENTITY(1,1), 
+descripcion varchar (50)-- prepago o pospago 
+);
+
+CREATE TABLE Servicio_Movil(
+id_servicio_movil INT PRIMARY KEY, 
+id_plan INT not null, -- Con la info y si es pospago o prepago 
+id_Tipo_Plan_movil INT NOT NULL, --prepago o pospago 
+CONSTRAINT FKservicio_contratado FOREIGN KEY (id_plan) REFERENCES Servicio_contratado(id_Servicio),
+CONSTRAINT FKplanmovil FOREIGN KEY (id_Tipo_Plan_movil) REFERENCES Tipo_Plan_movil(id_Tipo_Plan_movil)
+);
+
+
+
+CREATE TABLE servicio_Plan(
+id_plan INT PRIMARY KEY IDENTITY(1,1),
+costoMensual DECIMAL (10,2) NOT NULL,
+cantidad_de_datos INT, 
+cantidad_de_minutos VARCHAR,--Varchar porque puede ser ilimitado 
+cantidad_de_mensajes VARCHAR,--Varchar porque puede ser ilimitado 
+redes_incluidas VARCHAR,--fb ig wa tiktok etc 
+vigencia_en_dias INT NOT NULL,--TODOS TIENE VIGENCIA 
+fecha_de_renovacion DATE, --PUEDE SER NULL 
+)
+
+--CON ESTA TABLA PUEDO HACER UNA CONSULTA PARA SABER CUALES SON LOS PLANES QUE MAS SE RENUEVAN 
+CREATE TABLE Renovaciones(
+id_renovaciones INT PRIMARY KEY IDENTITY (1,1),
+id_plan INT NOT NULL, 
+Nueva_Vigencia_En_Dias INT NOT NULL, 
+fecha_de_renovacion DATE NOT NULL
+CONSTRAINT fkPlan FOREIGN KEY (id_plan) REFERENCES servicio_Plan(id_plan)
+
+)
+
+
+CREATE TABLE TiposServicioHogar (
+ID_Tipo_servicioHogar INT PRIMARY KEY,
+Nombre_tipoServicio NVARCHAR(50)--internet, fibra optica, tv
+);
+
+
+CREATE TABLE Servicios_Hogar (
+id_ServicioHogar INT PRIMARY KEY,
+id_servicio INT not null, 
+nombre_servicio NVARCHAR(50),--plan pobre, plan premium, plan para millonarios,plan individual 
+tipo_servicio NVARCHAR(50),  -- Pueden ser TV Satelital,Internet por Fibra Óptica,Internet Residencia lo dejo asi porque pueden ser varios de un solo 
+precio_mensual DECIMAL(10,2),
+velocidad_internet INT,      -- Puede ser NULL si el servicio no incluye internet
+cantidad_canalesTV INT,              -- Puede ser NULL si el servicio no incluye televisión
+otros_detalles NVARCHAR(MAX),  -- Otros detalles relevantes
+fecha_inici_contrato DATE,   -- Fecha de inicio del contrato para este servicio
+fecha_fin_contrato DATE,      -- Fecha de fin del contrato para este servicio
+CONSTRAINT fkserviciohogar FOREIGN KEY (id_servicio) REFERENCES Servicio_contratado(id_Servicio)
+
+);
+
+--tabla de muchos a muchos para hacer esa union de arriba
+CREATE TABLE Servicios_tipos_muchos(
+ID_Tipo_servicioHogar int not null, 
+id_ServicioHogar int not null, 
+PRIMARY KEY (id_ServicioHogar, ID_Tipo_servicioHogar),
+CONSTRAINT FK_ID_Tipo_servicioHogar FOREIGN KEY (ID_Tipo_servicioHogar) REFERENCES TiposServicioHogar(ID_Tipo_servicioHogar),
+CONSTRAINT FK_id_ServicioHogar FOREIGN KEY (id_ServicioHogar) REFERENCES Servicios_Hogar(id_ServicioHogar) 
+);
+
+
+
+
+
+--hacer detalle de factura donde se conecten las otras mierdas
 
 -- INCOMPLETA falta agregar los servicios ( ponerle mas logica)
 CREATE TABLE Factura(
@@ -125,165 +212,6 @@ CREATE TABLE Factura(
 	CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes.Clientes(id_clientes),
 	CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES Sucursales(idlocal)
 	);
-
---============================================================================================== 
-	CREATE TABLE Celulares (
-    Celularid  INT PRIMARY KEY,
-    Marca VARCHAR(50),
-    Modelo VARCHAR(50),
-    descripcion varchar (100)
-);
--- Tabla de Servicios
-CREATE TABLE Servicios (
-    ServicioID INT PRIMARY KEY,
-    descripcionServicio VARCHAR(50)
-);
-
-
--- Tabla de Contratos
-CREATE TABLE Contratos (
-    ContratoID INT PRIMARY KEY,
-    ClienteID INT,
-    ServicioID INT,
-    FechaInicio DATE,
-    FechaFin DATE,
-    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
-    FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
-);
-
-
--- Tabla de Planes
-CREATE TABLE PlanesPostpago (
-    PlanID INT PRIMARY KEY,
-    CelularID INT,
-    ClienteID INT,
-    ContratoID INT,
-    FOREIGN KEY (CelularID) REFERENCES Celulares(CelularID),
-    FOREIGN KEY (ClienteID) REFERENCES Clientes(ClienteID),
-    FOREIGN KEY (ContratoID) REFERENCES Contratos(ContratoID)
-);
-
-
-
-CREATE TABLE TipoServicio(
-
-
-); 
-
-
--- Tabla de ServiciosResidenciales
-CREATE TABLE ServiciosResidenciales (
-    ServicioResidencialID INT PRIMARY KEY,
-    NombreServicioResidencial VARCHAR(50),
-    ContratoID INT,
-    FOREIGN KEY (ContratoID) REFERENCES Contratos(ContratoID)
-);
-
---======================================================================
-
-
-
-
-
-
-
-
----(productos: Telefonia fija, telefonia movil...)
-CREATE TABLE Ventas.Servicios(
-    ID_Servicio INT PRIMARY KEY,
-	descripcion NVARCHAR(50),
-    Costo DECIMAL(10,2),
-    Velocidad INT,
-
-);
-GO
-
---averguar como funcionan los planes 
-CREATE TABLE Ventas.Planes (
-    ID_plan INT PRIMARY KEY,
-    descripcion NVARCHAR(50),
-	tiempo_duracion INT,
-	);
-GO
-
---no se muy bien a que se refiere con esta 
-CREATE TABLE Ventas.Servicios_Planes (
-    id_Servicios_Planes INT PRIMARY KEY,
-    ID_Servicio INT,
-	ID_plan INT,
-    Costo DECIMAL(10,2),
-	Id_periodo_pago int,
-	Cantidad NVARCHAR(50),
-);
-GO
-
---no entiendo para que es esta 
-CREATE TABLE Ventas.Periodo_pago(
-    Id_periodo_pago INT PRIMARY KEY,
-	Descripcion NVARCHAR(50)
-);
-GO
-
-
-CREATE TABLE Ventas.contrato (
-    codigo_contrato INT PRIMARY KEY,
-    id_Servicios_Planes INT,
-	id_clientes INT,
-	fecha_inicio date,
-	fecha_fin date, 
-	fecha_pago date
-);
-GO
-
-CREATE TABLE Ventas.factura (
-    codigo_factura INT PRIMARY KEY,
-	codigo_contrato INT,
-    id_Servicios_Planes INT,
-	ID_Cliente INT,
-	fecha_pago date
-);
-GO
-
-CREATE TABLE Ventas.Detalle_factura (
-    codigo_factura INT PRIMARY KEY,
-	codigo_contrato INT,
-    id_Servicios_Planes INT,
-	ID_Cliente INT,
-	fecha_pago date
-);
-GO
-
-CREATE TABLE Residencial.UsoYTrafico (
-    ID_Registro_Uso INT PRIMARY KEY,
-    ID_Cliente INT,
-	codigo_Servicios_Planes INT,
-    Fecha DATE,
-    actualizacion_cantidad INT
-);
-GO
-
-CREATE TABLE Servicios.Soporte (
-    ID_Ticket INT PRIMARY KEY,
-    ID_Cliente INT,
-    Fecha_de_apertura DATETIME,
-    Estado NVARCHAR(20),
-    Descripcion_del_problema NVARCHAR(MAX)
-
-);
-GO
-
-
-CREATE TABLE ventas.Facturacion (
-    ID_Factura INT PRIMARY KEY,
-    ID_Cliente INT,
-	ID_Servicio INT,
-    Fecha_de_emision DATE,
-    Fecha_de_vencimiento DATE,
-    Total_a_pagar DECIMAL(10,2)
-);
-GO
-
-
 
 ---DIMENSIONES 
 ---tiempo esta es fija 
@@ -329,6 +257,5 @@ para saber cuales son los servicions mas vendidos puedo hacerlo con la tabla de 
 para saber cual es el producto mas vendido en factura 
 
 tengo que relacionar la informacion del contrato en factura para poder obtener el tipo de servicio 
-   
    
    
