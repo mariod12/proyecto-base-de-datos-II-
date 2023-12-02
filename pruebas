@@ -1,0 +1,160 @@
+
+-- Crear la base de datos
+CREATE DATABASE MiEmpresaDB;
+USE MiEmpresaDB;
+
+-- Tabla para tipos de servicio
+CREATE TABLE TiposServicio (
+    TipoServicioID INT PRIMARY KEY,
+    NombreTipoServicio VARCHAR(50)
+);
+
+
+
+-- Tabla para servicios ( en descripcion van servicio movil prepago, postpago, tv, internet, fibra optica etc)
+CREATE TABLE Servicios(
+    ServicioID INT PRIMARY KEY,
+    TipoServicioID INT,
+    Descripcion VARCHAR(255),--esto a ver 
+    Precio DECIMAL(10, 2),-- en el plan 
+    FOREIGN KEY (TipoServicioID) REFERENCES TiposServicio(TipoServicioID)
+);
+
+-- Tabla para servicios móviles
+--en el detalle irian Llamadas y mensajes ilimitados, datos ilimitados y llamadas internacionales etc 
+CREATE TABLE ServiciosMoviles (
+    ServicioMovilID INT PRIMARY KEY,
+    ServicioID INT,
+    DetallesAdicionales VARCHAR(255),
+    FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
+);
+
+-- Tabla para servicios hogar --Canales HD y grabación, tv satelital 
+CREATE TABLE ServiciosHogar (
+    ServicioHogarID INT PRIMARY KEY,
+    ServicioID INT,
+    Velocidad INT,
+    DetallesAdicionales VARCHAR(255),
+    FOREIGN KEY (ServicioID) REFERENCES Servicios(ServicioID)
+);
+
+-- Insertar datos de ejemplo en la tabla de servicios
+INSERT INTO Servicios VALUES (1, 1, 'Servicio móvil prepago', 20.00);
+INSERT INTO Servicios VALUES (2, 1, 'Servicio móvil postpago', 40.00);
+INSERT INTO Servicios VALUES (3, 2, 'TV satelital', 30.00);
+INSERT INTO Servicios VALUES (4, 2, 'Internet por fibra óptica', 60.00);
+INSERT INTO Servicios VALUES (5, 2, 'Internet residencial', 45.00);
+
+-- Insertar datos de ejemplo en la tabla de servicios móviles
+INSERT INTO ServiciosMoviles VALUES (1, 1, 'Llamadas y mensajes ilimitados');
+INSERT INTO ServiciosMoviles VALUES (2, 2, 'Datos ilimitados y llamadas internacionales');
+
+-- Insertar datos de ejemplo en la tabla de servicios hogar
+INSERT INTO ServiciosHogar VALUES (1, 3, NULL, 'Canales HD y grabación');
+INSERT INTO ServiciosHogar VALUES (2, 4, 100, 'Sin límite de datos');
+INSERT INTO ServiciosHogar VALUES (3, 5, 50, 'Conexión estable');
+
+
+SELECT 
+    ServiciosMoviles.ServicioMovilID,
+    TiposServicio.NombreTipoServicio AS TipoServicio,
+    Servicios.Descripcion,
+    Servicios.Precio,
+    ServiciosMoviles.DetallesAdicionales
+FROM ServiciosMoviles
+JOIN Servicios ON ServiciosMoviles.ServicioID = Servicios.ServicioID
+JOIN TiposServicio ON Servicios.TipoServicioID = TiposServicio.TipoServicioID;
+
+SELECT 
+    ServiciosMoviles.ServicioMovilID,
+    TiposServicio.NombreTipoServicio AS TipoServicio,
+    Servicios.Descripcion,
+    Servicios.Precio,
+    ServiciosMoviles.DetallesAdicionales
+FROM ServiciosMoviles
+JOIN Servicios ON ServiciosMoviles.ServicioID = Servicios.ServicioID
+JOIN TiposServicio ON Servicios.TipoServicioID = TiposServicio.TipoServicioID
+
+
+
+SELECT 
+    ServiciosHogar.ServicioHogarID,
+    TiposServicio.NombreTipoServicio AS TipoServicio,
+    Servicios.Descripcion,
+    Servicios.Precio,
+    ServiciosHogar.DetallesAdicionales
+FROM ServiciosHogar
+JOIN Servicios ON ServiciosHogar.ServicioID = Servicios.ServicioID
+JOIN TiposServicio ON Servicios.TipoServicioID = TiposServicio.TipoServicioID;
+
+
+
+
+
+
+CREATE TABLE Servicioss (
+    ID_Servicio INT PRIMARY KEY,
+    descripcion NVARCHAR(50),
+    Costo DECIMAL(10,2),
+    Velocidad INT
+);
+
+CREATE TABLE Planes (
+    ID_plan INT PRIMARY KEY,
+    descripcion NVARCHAR(50),
+    tiempo_duracion INT
+);
+
+CREATE TABLE Servicios_Planes (
+    id_Servicios_Planes INT PRIMARY KEY,
+    ID_Servicio INT,
+    ID_plan INT,
+    Costo DECIMAL(10,2),
+    Id_periodo_pago INT,
+    Cantidad NVARCHAR(50),
+    FOREIGN KEY (ID_Servicio) REFERENCES Servicioss(ID_Servicio),
+    FOREIGN KEY (ID_plan) REFERENCES Planes(ID_plan)
+);
+
+CREATE TABLE contrato (
+    codigo_contrato INT PRIMARY KEY,
+    id_Servicios_Planes INT,
+    id_clientes INT,
+    fecha_inicio DATE,
+    fecha_fin DATE, 
+    fecha_pago DATE,
+    FOREIGN KEY (id_Servicios_Planes) REFERENCES Servicios_Planes(id_Servicios_Planes)
+);
+
+-- Insertar datos de ejemplo
+-- Servicios
+INSERT INTO Servicioss VALUES (4, 'Internet Residencial', 45.00, 100);
+INSERT INTO Servicioss VALUES (5, 'Televisión por Cable', 30.00, NULL);
+
+-- Planes
+INSERT INTO Planes VALUES (5, 'Plan Mensual', 30);
+INSERT INTO Planes VALUES (6, 'Plan Anual', 365);
+
+-- Servicios_Planes
+INSERT INTO Servicios_Planes VALUES (3, 4, 5, 45.00, 1, 'Ilimitado');
+INSERT INTO Servicios_Planes VALUES (5, 5, 6, 30.00, 2, '200 canales');
+
+-- Contrato
+INSERT INTO contrato VALUES (2, 1, 1, '2023-01-01', '2023-12-31', '2023-01-01');
+
+
+SELECT
+    c.codigo_contrato,
+    sp.id_Servicios_Planes,
+    ss.descripcion AS servicio,
+    p.descripcion ,
+    sp.Costo,
+    sp.Id_periodo_pago,
+    sp.Cantidad,
+    c.fecha_inicio,
+    c.fecha_fin,
+    c.fecha_pago
+FROM contrato c
+JOIN Servicios_Planes sp ON c.id_Servicios_Planes = sp.id_Servicios_Planes
+JOIN servicioss ss ON sp.ID_Servicio = ss.ID_Servicio
+JOIN Planes p ON sp.ID_plan = p.ID_plan;
