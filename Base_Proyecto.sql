@@ -88,7 +88,6 @@ descripcion VARCHAR (80) NOT NULL,
 comentario VARCHAR (150) NULL
 );
 
-
 CREATE TABLE Empleados.Empleados(
 id_empleado INTEGER PRIMARY KEY,
 id_persona INTEGER NOT NULL,
@@ -111,16 +110,9 @@ eMail VARCHAR (50) NULL,
 CONSTRAINT FK_sucur_mun FOREIGN KEY (idcolonia) REFERENCES Personas.colonias(id_colonia)
 );
 
-CREATE TABLE Tipos_Servicios(
+CREATE TABLE Tipos_Servicios_generales(
 id_tipo_servicio INT PRIMARY KEY IDENTITY(1,1), 
 descripcion varchar(100)--hogar o movil 
-);
-
---OJO A ESTA TABLA QUE TENGO SOLO PARA SABER SI ES TIPO HOGAR O MOVIL Y LUEGO JALARLO A LA FACTURA O ALGO AIS 
-CREATE TABLE Servicio_contratado(
-id_Servicio INT PRIMARY KEY IDENTITY (1,1),
-id_tipo INT NOT NULL,--hogar o movil 
-CONSTRAINT FKservicios FOREIGN KEY (id_tipo) REFERENCES Tipos_Servicios(id_tipo_servicio)
 );
 
 CREATE TABLE Tipo_Plan_movil (
@@ -128,43 +120,24 @@ id_Tipo_Plan_movil INT PRIMARY KEY IDENTITY(1,1),
 descripcion varchar (50)-- prepago o pospago 
 );
 
-CREATE TABLE Servicio_Movil(
-id_servicio_movil INT PRIMARY KEY, 
-id_plan INT not null, -- Con la info y si es pospago o prepago 
-id_Tipo_Plan_movil INT NOT NULL, --prepago o pospago 
-CONSTRAINT FKservicio_contratado FOREIGN KEY (id_plan) REFERENCES Servicio_contratado(id_Servicio),
-CONSTRAINT FKplanmovil FOREIGN KEY (id_Tipo_Plan_movil) REFERENCES Tipo_Plan_movil(id_Tipo_Plan_movil)
-);
-
-
-
-CREATE TABLE servicio_Plan(
+CREATE TABLE servicios_Planes(
 id_plan INT PRIMARY KEY IDENTITY(1,1),
-costoMensual DECIMAL (10,2) NOT NULL,
+id_tipo_plan int not null, 
+costo DECIMAL (10,2) NOT NULL,
 cantidad_de_datos INT, 
-cantidad_de_minutos VARCHAR,--Varchar porque puede ser ilimitado 
-cantidad_de_mensajes VARCHAR,--Varchar porque puede ser ilimitado 
-redes_incluidas VARCHAR,--fb ig wa tiktok etc 
+cantidad_de_minutos VARCHAR(100),--Varchar porque puede ser ilimitado 
+cantidad_de_mensajes VARCHAR(100),--Varchar porque puede ser ilimitado 
+redes_incluidas VARCHAR(100),--fb ig wa tiktok etc 
 vigencia_en_dias INT NOT NULL,--TODOS TIENE VIGENCIA 
-fecha_de_renovacion DATE, --PUEDE SER NULL 
-)
+fecha_de_renovacion DATE, --PUEDE SER NULL, SOLAMENTE ES PARA POSPAGO O PAQUETES PREPAGO QUE SE RENUEVAN 
+CONSTRAINT FKservicioplan FOREIGN KEY (id_tipo_plan) REFERENCES Tipo_Plan_movil(id_Tipo_Plan_movil)
 
---CON ESTA TABLA PUEDO HACER UNA CONSULTA PARA SABER CUALES SON LOS PLANES QUE MAS SE RENUEVAN 
-CREATE TABLE Renovaciones(
-id_renovaciones INT PRIMARY KEY IDENTITY (1,1),
-id_plan INT NOT NULL, 
-Nueva_Vigencia_En_Dias INT NOT NULL, 
-fecha_de_renovacion DATE NOT NULL
-CONSTRAINT fkPlan FOREIGN KEY (id_plan) REFERENCES servicio_Plan(id_plan)
-
-)
-
+);
 
 CREATE TABLE TiposServicioHogar (
 ID_Tipo_servicioHogar INT PRIMARY KEY,
 Nombre_tipoServicio NVARCHAR(50)--internet, fibra optica, tv
 );
-
 
 CREATE TABLE Servicios_Hogar (
 id_ServicioHogar INT PRIMARY KEY,
@@ -175,10 +148,8 @@ precio_mensual DECIMAL(10,2),
 velocidad_internet INT,      -- Puede ser NULL si el servicio no incluye internet
 cantidad_canalesTV INT,              -- Puede ser NULL si el servicio no incluye televisión
 otros_detalles NVARCHAR(MAX),  -- Otros detalles relevantes
-fecha_inici_contrato DATE,   -- Fecha de inicio del contrato para este servicio
+fecha_inicio_contrato DATE,   -- Fecha de inicio del contrato para este servicio
 fecha_fin_contrato DATE,      -- Fecha de fin del contrato para este servicio
-CONSTRAINT fkserviciohogar FOREIGN KEY (id_servicio) REFERENCES Servicio_contratado(id_Servicio)
-
 );
 
 --tabla de muchos a muchos para hacer esa union de arriba
@@ -190,17 +161,30 @@ CONSTRAINT FK_ID_Tipo_servicioHogar FOREIGN KEY (ID_Tipo_servicioHogar) REFERENC
 CONSTRAINT FK_id_ServicioHogar FOREIGN KEY (id_ServicioHogar) REFERENCES Servicios_Hogar(id_ServicioHogar) 
 );
 
+CREATE TABLE Servicios_Contratados (
+    id_servicio_contratado INT PRIMARY KEY IDENTITY(1,1),
+    id_tipo_servicio INT NOT NULL,
+	id_servicios_Planes int, -- Puede ser NULL si no es un servicio movil 
+    Servicios_Hogar INT, -- Puede ser NULL si no es un servicio hogar
+    CONSTRAINT FK_tipo_servicio FOREIGN KEY (id_tipo_servicio) REFERENCES Tipos_Servicios_generales(id_tipo_servicio),
+	CONSTRAINT fk_servicio_planes FOREIGN KEY (id_servicios_Planes) REFERENCES servicios_Planes(id_plan),
+    CONSTRAINT FK_Servicios_Hogar FOREIGN KEY (Servicios_Hogar) REFERENCES Servicios_Hogar(id_ServicioHogar)
+);
 
+--CON ESTA TABLA PUEDO HACER UNA CONSULTA PARA SABER CUALES SON LOS PLANES QUE MAS SE RENUEVAN 
+CREATE TABLE Renovaciones(
+id_renovaciones INT PRIMARY KEY IDENTITY (1,1),
+id_servicio_contratado INT NOT NULL, 
+fecha_de_renovacion DATE NOT NULL,
+CONSTRAINT fkservicioContratad FOREIGN KEY (Servicios_Contratados) REFERENCES Servicios_Contratados(id_servicio_contratado)
 
+)
 
-
---hacer detalle de factura donde se conecten las otras mierdas
-
--- INCOMPLETA falta agregar los servicios ( ponerle mas logica)
 CREATE TABLE Factura(
 	n_Factura INTEGER PRIMARY KEY,
 	id_empleado INTEGER NOT NULL,
 	id_cliente INTEGER not null,
+	id_sucursal INT NOT NULL, 
 	fecha_hora DATETIME NOT NULL,
 	id_local INTEGER NOT NULL,
 	monto_pagado DECIMAL (10,2) NOT NULL,
@@ -212,6 +196,9 @@ CREATE TABLE Factura(
 	CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes.Clientes(id_clientes),
 	CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES Sucursales(idlocal)
 	);
+
+
+
 
 ---DIMENSIONES 
 ---tiempo esta es fija 
