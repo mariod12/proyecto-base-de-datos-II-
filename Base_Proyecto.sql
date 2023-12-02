@@ -99,7 +99,7 @@ CONSTRAINT FK_emp_puesto FOREIGN KEY (id_puesto) REFERENCES empleados.PuestosTra
 );
 
 --esta se puede usar para ver cual es la sucursal que mas ventas tiene 
-CREATE TABLE Sucursales(
+CREATE TABLE ventas.Sucursales(
 idLocal INTEGER PRIMARY KEY,
 idcolonia INTEGER NOT NULL,
 descripcion VARCHAR (100) NOT NULL, -- para el nombre de la sucursal o direccion, verificar esto 
@@ -110,17 +110,17 @@ eMail VARCHAR (50) NULL,
 CONSTRAINT FK_sucur_mun FOREIGN KEY (idcolonia) REFERENCES Personas.colonias(id_colonia)
 );
 
-CREATE TABLE Tipos_Servicios_generales(
+CREATE TABLE ventas.Tipos_Servicios_generales(
 id_tipo_servicio INT PRIMARY KEY IDENTITY(1,1), 
 descripcion varchar(100)--hogar o movil 
 );
 
-CREATE TABLE Tipo_Plan_movil (
+CREATE TABLE ventas.Tipo_Plan_movil (
 id_Tipo_Plan_movil INT PRIMARY KEY IDENTITY(1,1), 
 descripcion varchar (50)-- prepago o pospago 
 );
 
-CREATE TABLE servicios_Planes(
+CREATE TABLE ventas.servicios_Planes(
 id_plan INT PRIMARY KEY IDENTITY(1,1),
 id_tipo_plan int not null, 
 costo DECIMAL (10,2) NOT NULL,
@@ -130,16 +130,16 @@ cantidad_de_mensajes VARCHAR(100),--Varchar porque puede ser ilimitado
 redes_incluidas VARCHAR(100),--fb ig wa tiktok etc 
 vigencia_en_dias INT NOT NULL,--TODOS TIENE VIGENCIA 
 fecha_de_renovacion DATE, --PUEDE SER NULL, SOLAMENTE ES PARA POSPAGO O PAQUETES PREPAGO QUE SE RENUEVAN 
-CONSTRAINT FKservicioplan FOREIGN KEY (id_tipo_plan) REFERENCES Tipo_Plan_movil(id_Tipo_Plan_movil)
+CONSTRAINT FKservicioplan FOREIGN KEY (id_tipo_plan) REFERENCES ventas.Tipo_Plan_movil(id_Tipo_Plan_movil)
 
 );
 
-CREATE TABLE TiposServicioHogar (
+CREATE TABLE ventas.TiposServicioHogar (
 ID_Tipo_servicioHogar INT PRIMARY KEY,
 Nombre_tipoServicio NVARCHAR(50)--internet, fibra optica, tv
 );
 
-CREATE TABLE Servicios_Hogar (
+CREATE TABLE ventas.Servicios_Hogar (
 id_ServicioHogar INT PRIMARY KEY,
 id_servicio INT not null, 
 nombre_servicio NVARCHAR(50),--plan pobre, plan premium, plan para millonarios,plan individual 
@@ -153,52 +153,51 @@ fecha_fin_contrato DATE,      -- Fecha de fin del contrato para este servicio
 );
 
 --tabla de muchos a muchos para hacer esa union de arriba
-CREATE TABLE Servicios_tipos_muchos(
+CREATE TABLE ventas.Servicios_tipos_muchos(
 ID_Tipo_servicioHogar int not null, 
 id_ServicioHogar int not null, 
 PRIMARY KEY (id_ServicioHogar, ID_Tipo_servicioHogar),
-CONSTRAINT FK_ID_Tipo_servicioHogar FOREIGN KEY (ID_Tipo_servicioHogar) REFERENCES TiposServicioHogar(ID_Tipo_servicioHogar),
-CONSTRAINT FK_id_ServicioHogar FOREIGN KEY (id_ServicioHogar) REFERENCES Servicios_Hogar(id_ServicioHogar) 
+CONSTRAINT FK_ID_Tipo_servicioHogar FOREIGN KEY (ID_Tipo_servicioHogar) REFERENCES ventas.TiposServicioHogar(ID_Tipo_servicioHogar),
+CONSTRAINT FK_id_ServicioHogar FOREIGN KEY (id_ServicioHogar) REFERENCES ventas.Servicios_Hogar(id_ServicioHogar) 
 );
 
-CREATE TABLE Servicios_Contratados (
+CREATE TABLE ventas.Servicios_Contratados (
     id_servicio_contratado INT PRIMARY KEY IDENTITY(1,1),
     id_tipo_servicio INT NOT NULL,
 	id_servicios_Planes int, -- Puede ser NULL si no es un servicio movil 
     Servicios_Hogar INT, -- Puede ser NULL si no es un servicio hogar
-    CONSTRAINT FK_tipo_servicio FOREIGN KEY (id_tipo_servicio) REFERENCES Tipos_Servicios_generales(id_tipo_servicio),
-	CONSTRAINT fk_servicio_planes FOREIGN KEY (id_servicios_Planes) REFERENCES servicios_Planes(id_plan),
-    CONSTRAINT FK_Servicios_Hogar FOREIGN KEY (Servicios_Hogar) REFERENCES Servicios_Hogar(id_ServicioHogar)
+    CONSTRAINT FK_tipo_servicio FOREIGN KEY (id_tipo_servicio) REFERENCES ventas.Tipos_Servicios_generales(id_tipo_servicio),
+	CONSTRAINT fk_servicio_planes FOREIGN KEY (id_servicios_Planes) REFERENCES ventas.servicios_Planes(id_plan),
+    CONSTRAINT FK_Servicios_Hogar FOREIGN KEY (Servicios_Hogar) REFERENCES ventas.Servicios_Hogar(id_ServicioHogar)
 );
 
 --CON ESTA TABLA PUEDO HACER UNA CONSULTA PARA SABER CUALES SON LOS PLANES QUE MAS SE RENUEVAN 
-CREATE TABLE Renovaciones(
+CREATE TABLE ventas.Renovaciones(
 id_renovaciones INT PRIMARY KEY IDENTITY (1,1),
 id_servicio_contratado INT NOT NULL, 
 fecha_de_renovacion DATE NOT NULL,
-CONSTRAINT fkservicioContratad FOREIGN KEY (id_servicio_contratado) REFERENCES Servicios_Contratados(id_servicio_contratado)
+CONSTRAINT fkservicioContratad FOREIGN KEY (id_servicio_contratado) REFERENCES ventas.Servicios_Contratados(id_servicio_contratado)
 
 );
 
-CREATE TABLE Factura(
-n_Factura INTEGER PRIMARY KEY,
-id_empleado INTEGER NOT NULL,
-id_cliente INTEGER not null,
-id_sucursal INT NOT NULL, 
-Id_Servicio_Contratado int not null, 
-fecha_hora DATETIME NOT NULL,
-id_local INTEGER NOT NULL,
-monto_pagado DECIMAL (10,2) NOT NULL,
-cambio DECIMAL (10,2) NOT NULL,
-sub_total DECIMAL (10,2) NOT NULL,
-gravado15 DECIMAL (10,2) NOT NULL,
-total DECIMAL (10,2) NOT NULL,
-CONSTRAINT FK_id_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados.Empleados(id_empleado),
-CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes(id_clientes),
-CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES Sucursales(idlocal),
-CONSTRAINT FK_servicio_contrado FOREIGN KEY (Id_Servicio_Contratado) REFERENCES Servicios_Contratados(id_servicio_contratado),
+CREATE TABLE ventas.Factura(
+	n_Factura INTEGER PRIMARY KEY,
+	id_empleado INTEGER NOT NULL,
+	id_cliente INTEGER not null,
+	id_sucursal INT NOT NULL, 
+	Id_Servicio_Contratado int not null, 
+	fecha_hora DATETIME NOT NULL,
+	id_local INTEGER NOT NULL,
+	monto_pagado DECIMAL (10,2) NOT NULL,
+	cambio DECIMAL (10,2) NOT NULL,
+	sub_total DECIMAL (10,2) NOT NULL,
+	gravado15 DECIMAL (10,2) NOT NULL,
+	total DECIMAL (10,2) NOT NULL,
+	CONSTRAINT FK_id_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados.Empleados(id_empleado),
+	CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes(id_clientes),
+	CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES ventas.Sucursales(idlocal),
+	CONSTRAINT FK_servicio_contrado FOREIGN KEY (Id_Servicio_Contratado) REFERENCES ventas.Servicios_Contratados(id_servicio_contratado),
 	);
-
 
 
 
