@@ -1,7 +1,7 @@
-CREATE DATABASE Telecomunication_Bussines;
+CREATE DATABASE BDII_Telecomunication_Bussines;
 GO
 
-USE Telecomunication_Bussines;
+USE BDII_Telecomunication_Bussines;
 GO
 --esquemas 
 CREATE SCHEMA Personas
@@ -176,25 +176,27 @@ CREATE TABLE Renovaciones(
 id_renovaciones INT PRIMARY KEY IDENTITY (1,1),
 id_servicio_contratado INT NOT NULL, 
 fecha_de_renovacion DATE NOT NULL,
-CONSTRAINT fkservicioContratad FOREIGN KEY (Servicios_Contratados) REFERENCES Servicios_Contratados(id_servicio_contratado)
+CONSTRAINT fkservicioContratad FOREIGN KEY (id_servicio_contratado) REFERENCES Servicios_Contratados(id_servicio_contratado)
 
-)
+);
 
 CREATE TABLE Factura(
-	n_Factura INTEGER PRIMARY KEY,
-	id_empleado INTEGER NOT NULL,
-	id_cliente INTEGER not null,
-	id_sucursal INT NOT NULL, 
-	fecha_hora DATETIME NOT NULL,
-	id_local INTEGER NOT NULL,
-	monto_pagado DECIMAL (10,2) NOT NULL,
-	cambio DECIMAL (10,2) NOT NULL,
-	sub_total DECIMAL (10,2) NOT NULL,
-	gravado15 DECIMAL (10,2) NOT NULL,
-	total DECIMAL (10,2) NOT NULL,
-	CONSTRAINT FK_id_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados.Empleados(id_empleado),
-	CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes.Clientes(id_clientes),
-	CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES Sucursales(idlocal)
+n_Factura INTEGER PRIMARY KEY,
+id_empleado INTEGER NOT NULL,
+id_cliente INTEGER not null,
+id_sucursal INT NOT NULL, 
+Id_Servicio_Contratado int not null, 
+fecha_hora DATETIME NOT NULL,
+id_local INTEGER NOT NULL,
+monto_pagado DECIMAL (10,2) NOT NULL,
+cambio DECIMAL (10,2) NOT NULL,
+sub_total DECIMAL (10,2) NOT NULL,
+gravado15 DECIMAL (10,2) NOT NULL,
+total DECIMAL (10,2) NOT NULL,
+CONSTRAINT FK_id_empleado FOREIGN KEY (id_empleado) REFERENCES Empleados.Empleados(id_empleado),
+CONSTRAINT FK_id_cliente FOREIGN KEY (id_cliente) REFERENCES Clientes(id_clientes),
+CONSTRAINT FK_id_local FOREIGN KEY (id_local) REFERENCES Sucursales(idlocal),
+CONSTRAINT FK_servicio_contrado FOREIGN KEY (Id_Servicio_Contratado) REFERENCES Servicios_Contratados(id_servicio_contratado),
 	);
 
 
